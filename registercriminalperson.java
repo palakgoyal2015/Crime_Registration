@@ -11,8 +11,10 @@ public class registercriminalperson {
 
         System.out.println("Enter Crime Place ID:");
         int crimePlaceId = sc.nextInt(); 
-        sc.nextLine(); 
+        sc.nextLine();
 
+       
+        
         System.out.println("How many criminal persons do you want to add?");
         int numberOfCriminals = sc.nextInt();
         sc.nextLine(); 
@@ -41,12 +43,13 @@ public class registercriminalperson {
 
             System.out.println("Enter Area of Arrest:");
             String areaofArrest = sc.nextLine();
-
+            String addColumnResult = dao.addSuspectCountColumn();
+            System.out.println(addColumnResult);
             
             String result = dao.registercriminalperson(crimePlaceId, criminalNumber, name, age, gender, address, identifyingMark, areaofArrest);
             System.out.println(result);
         }
 
-       
+        sc.close(); 
     }
 }
