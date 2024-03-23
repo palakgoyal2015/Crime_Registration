@@ -1,4 +1,3 @@
-
 package usecases;
 
 import java.util.ArrayList;
@@ -16,7 +15,7 @@ public class registercrimeplace {
 
         System.out.println("Enter Crime Number:");
         int crimeNumber = sc.nextInt();
-        sc.nextLine(); // Consume newline
+        sc.nextLine(); 
         System.out.println("Enter Date (YYYY-MM-DD):");
         String dateString = sc.nextLine();
         Date date = java.sql.Date.valueOf(dateString); 
@@ -47,12 +46,13 @@ public class registercrimeplace {
             System.out.println("Enter Main Suspect " + (i + 1) + ":");
             mainSuspects.add(sc.nextLine());
         }
-
-
-        
+        String addstatus = dao.addStatusColumn();
+        System.out.println(addstatus);
         String result = dao.registercrimeplace(crimeNumber, date, place, description, victims, details, mainSuspects);
         
         System.out.println(result);
     }
 }
+
+
 
