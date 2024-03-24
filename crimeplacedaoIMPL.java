@@ -1,73 +1,25 @@
 package dao;
 
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.util.List;
 import utility.DBUtil;
 
-public class criminalpersondaoIMPL implements criminalpersondao {
+public class crimeplacedaoIMPL implements crimeplacedao {
+   
     @Override
-    public String addSuspectCountColumn() {
-        String msg = "Already present suspectCount column";
+    public String addStatusColumn() {
+        String msg = "Already present status column";
         try (Connection conn = DBUtil.provideConnection()) {
-            PreparedStatement ps = conn.prepareStatement("ALTER TABLE criminalperson ADD COLUMN suspectCount INT DEFAULT 0");
+            PreparedStatement ps = conn.prepareStatement("ALTER TABLE crimeplace ADD COLUMN status VARCHAR(50)");
             int rowsAffected = ps.executeUpdate();
             if (rowsAffected > 0) {
-                msg = "SuspectCount column added successfully";
+                msg = "Status column added successfully";
             } else {
-                // msg = "Failed to add suspectCount column";
-            }
-        } catch (SQLException e) {
-            // e.printStackTrace();
-            // msg = "not added";
-        }
-        return msg;
-    }
-
-    @Override
-    public String registercriminalperson(int crimePlaceId, int criminalNumber, String name, int age, String gender,
-                                          String address, String identifyingMark, String areaofArrest) {
-        String msg = "Not registered criminal person";
-        try (Connection conn = DBUtil.provideConnection()) {
-           
-            PreparedStatement psInsert = conn.prepareStatement(
-                "INSERT INTO criminalperson (crimePlaceId, criminalNumber, name, age, gender, address, identifyingMark, areaofArrest) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-            );
-            psInsert.setInt(1, crimePlaceId);
-            psInsert.setInt(2, criminalNumber);
-            psInsert.setString(3, name);
-            psInsert.setInt(4, age);
-            psInsert.setString(5, gender);
-            psInsert.setString(6, address);
-            psInsert.setString(7, identifyingMark);
-            psInsert.setString(8, areaofArrest);
-            
-            int rowsAffectedInsert = psInsert.executeUpdate();
-
-            if (rowsAffectedInsert > 0) {
-                
-                PreparedStatement psUpdateCount = conn.prepareStatement(
-                    "UPDATE criminalperson cp " +
-                    "JOIN (" +
-                    "    SELECT crimePlaceId, COUNT(*) AS countCriminalPersons " +
-                    "    FROM criminalperson " +
-                    "    GROUP BY crimePlaceId " +
-                    ") AS counts ON cp.crimePlaceId = counts.crimePlaceId " +
-                    "SET cp.suspectCount = counts.countCriminalPersons"
-                );
-                
-                int rowsAffectedUpdate = psUpdateCount.executeUpdate();
-
-                if (rowsAffectedUpdate > 0) {
-                    msg = "Criminal person registered successfully";
-                } else {
-                    msg = "Failed to update suspect count";
-                }
-            } else {
-                msg = "Failed to register criminal person";
+                // msg = "Failed to add status column";
             }
         } catch (SQLException e) {
             // e.printStackTrace();
@@ -75,20 +27,51 @@ public class criminalpersondaoIMPL implements criminalpersondao {
         }
         return msg;
     }
+
     @Override
-    public int getSuspectCountForCrimePlace(int crimePlaceId) {
+public String registercrimeplace(int crimeNumber, Date date, String place, String description, List<String> victims,
+                                 String details, List<String> mainSuspects) {
+    String msg = "Crime place not registered";
+    try (Connection conn = DBUtil.provideConnection()) {
+        PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO crimeplace (crimeNumber, date, place, description, victims, details, mainSuspects, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        ps.setInt(1, crimeNumber);
+        ps.setDate(2, date);
+        ps.setString(3, place);
+        ps.setString(4, description);
+        ps.setString(5, String.join(",", victims));
+        ps.setString(6, details);
+        ps.setString(7, String.join(",", mainSuspects));
+
+       
+        criminalpersondaoIMPL criminalPersonDao = new criminalpersondaoIMPL();
+        int suspectCount = criminalPersonDao.getSuspectCountForCrimePlace(crimeNumber);
+
+       
+        String status = (suspectCount < 1) ? "Unsolved" : "Solved";
+        ps.setString(8, status);
+
+        int rowsAffected = ps.executeUpdate();
+        if (rowsAffected > 0) {
+            msg = "Crime place registered successfully";
+        } else {
+            msg = "Failed to register crime place";
+        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        // Handle database exception
+        msg = "Error: " + e.getMessage();
+    }
+    return msg;
+}
+
+    private int getSuspectCount(Connection conn, int crimeNumber) throws SQLException {
         int suspectCount = 0;
-        try (Connection conn = DBUtil.provideConnection()) {
-            PreparedStatement ps = conn.prepareStatement(
-                    "SELECT COUNT(*) FROM criminalperson WHERE crimePlaceId = ?");
-            ps.setInt(1, crimePlaceId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                suspectCount = rs.getInt(1);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            // Handle exception
+        PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM criminalperson WHERE crimePlaceId = ?");
+        ps.setInt(1, crimeNumber);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            suspectCount = rs.getInt(1);
         }
         return suspectCount;
     }
