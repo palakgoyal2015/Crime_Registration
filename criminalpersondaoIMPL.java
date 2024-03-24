@@ -2,6 +2,7 @@ package dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import utility.DBUtil;
@@ -73,5 +74,22 @@ public class criminalpersondaoIMPL implements criminalpersondao {
             // msg = "Error: " + e.getMessage();
         }
         return msg;
+    }
+    @Override
+    public int getSuspectCountForCrimePlace(int crimePlaceId) {
+        int suspectCount = 0;
+        try (Connection conn = DBUtil.provideConnection()) {
+            PreparedStatement ps = conn.prepareStatement(
+                    "SELECT COUNT(*) FROM criminalperson WHERE crimePlaceId = ?");
+            ps.setInt(1, crimePlaceId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                suspectCount = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exception
+        }
+        return suspectCount;
     }
 }
